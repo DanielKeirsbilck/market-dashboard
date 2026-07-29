@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Market Dashboard</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <h1>Market Dashboard</h1>
+      <p class="subtitle">Clean, mobile-first dashboard for financial advisors</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="indices">
+      <article class="index-card">
+        <div class="index-header">
+          <div>
+            <h3>S&P 500</h3>
+            <div class="index-value" id="sp500Value">—</div>
+          </div>
+          <canvas id="sp500Mini" width="120" height="40"></canvas>
+        </div>
+      </article>
+
+      <article class="index-card">
+        <div class="index-header">
+          <div>
+            <h3>Nasdaq</h3>
+            <div class="index-value" id="nasdaqValue">—</div>
+          </div>
+          <canvas id="nasdaqMini" width="120" height="40"></canvas>
+        </div>
+      </article>
+
+      <article class="index-card">
+        <div class="index-header">
+          <div>
+            <h3>Dow Jones</h3>
+            <div class="index-value" id="dowValue">—</div>
+          </div>
+          <canvas id="dowMini" width="120" height="40"></canvas>
+        </div>
+      </article>
+
+      <article class="index-card">
+        <div class="index-header">
+          <div>
+            <h3>Russell 2000</h3>
+            <div class="index-value" id="russellValue">—</div>
+          </div>
+          <canvas id="russellMini" width="120" height="40"></canvas>
+        </div>
+      </article>
+    </section>
+
+    <section class="main-grid">
+      <div class="chart-panel card">
+        <div class="card-header">
+          <h2 id="chartTitle">Select a symbol</h2>
+          <div class="chart-actions">
+            <small id="chartSubtitle">Watchlist or index</small>
+          </div>
+        </div>
+        <canvas id="mainChart"></canvas>
+      </div>
+
+      <aside class="watchlist-panel card">
+        <div class="card-header">
+          <h2>Watchlist</h2>
+        </div>
+        <div class="watchlist-controls">
+          <input id="symbolInput" type="text" placeholder="Symbol (e.g., AAPL)" maxlength="10">
+          <button id="addSymbolBtn">Add</button>
+        </div>
+        <ul id="watchlist" class="watchlist"></ul>
+
+        <div class="card-footer">
+          <small>Watchlist persists in your browser. Integrate a market API in js/app.js when ready.</small>
+        </div>
+      </aside>
+    </section>
+
+    <section class="extras">
+      <div class="card">
+        <div class="card-header"><h3>News & Feeds</h3></div>
+        <div class="card-body">
+          <p class="muted">Placeholder for news feed integration (RSS, News API, or provider like Bloomberg/Finnhub).</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><h3>Investment Models</h3></div>
+        <div class="card-body">
+          <p class="muted">Placeholder area for investment model outputs and scenario tools.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <small>Built with Chart.js — Structure supports adding APIs, models, and feeds later.</small>
+    </div>
+  </footer>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
