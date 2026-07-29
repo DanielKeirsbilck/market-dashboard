@@ -1,16 +1,17 @@
-// app.js — simple dashboard logic with Chart.js and mock data
+// app.js — simple dashboard logic with Chart.js and Finnhub integration if API key is provided
 // Structure notes:
-// - fetchIndexData / fetchSymbolData are single points to swap in real market API calls
+// - fetchIndexData / fetchSymbolData will attempt to use window.FinnhubProvider (if a key is set), otherwise fall back to mock data
 // - Investment models and news feed integration hooks are marked with TODO
 
 const INDEXES = [
-  { id: 'SPX', name: 'S&P 500', elVal: 'sp500Value', miniCanvas: 'sp500Mini' },
-  { id: 'NDX', name: 'Nasdaq', elVal: 'nasdaqValue', miniCanvas: 'nasdaqMini' },
-  { id: 'DJI', name: 'Dow Jones', elVal: 'dowValue', miniCanvas: 'dowMini' },
-  { id: 'RUT', name: 'Russell 2000', elVal: 'russellValue', miniCanvas: 'russellMini' }
+  { id: 'SPX', name: 'S&P 500', elVal: 'sp500Value', miniCanvas: 'sp500Mini', finnhubSymbol: '^GSPC' },
+  { id: 'NDX', name: 'Nasdaq', elVal: 'nasdaqValue', miniCanvas: 'nasdaqMini', finnhubSymbol: '^IXIC' },
+  { id: 'DJI', name: 'Dow Jones', elVal: 'dowValue', miniCanvas: 'dowMini', finnhubSymbol: '^DJI' },
+  { id: 'RUT', name: 'Russell 2000', elVal: 'russellValue', miniCanvas: 'russellMini', finnhubSymbol: '^RUT' }
 ];
 
 const WATCHLIST_KEY = 'market_dashboard_watchlist_v1';
+const FINNHUB_KEY_STORAGE = 'market_dashboard_finnhub_key_v1';
 let watchlist = [];
 let miniCharts = {};
 let mainChart = null;
@@ -28,9 +29,18 @@ function generateMockSeries(base=1000, volatility=1.2, points=30){
   return data;
 }
 
-// Placeholder fetch for index data — replace with real API calls
-async function fetchIndexData(indexId){
-  // TODO: Integrate real market data provider here (e.g., Finnhub, IEX Cloud, Alpha Vantage)
+// Wrapper: try FinnhubProvider if available and key present
+async function fetchIndexData(indexId, finnhubSymbol){
+  const key = localStorage.getItem(FINNHUB_KEY_STORAGE);
+  if(window.FinnhubProvider && key){
+    try{
+      const res = await window.FinnhubProvider.fetchIndexData(finnhubSymbol);
+      if(res && res.series && res.series.length) return res;
+    }catch(e){
+      console.warn('Finnhub index fetch failed, falling back to mock', e);
+    }
+  }
+  // fallback mock
   const base = {
     SPX: 4600,
     NDX: 14800,
@@ -41,9 +51,19 @@ async function fetchIndexData(indexId){
   return { series, current: series[series.length-1] };
 }
 
-// Placeholder fetch for symbol data — replace with real API calls
+// Wrapper: try FinnhubProvider for symbols
 async function fetchSymbolData(symbol){
-  // TODO: Integrate symbol-level historical data from a provider
+  const key = localStorage.getItem(FINNHUB_KEY_STORAGE);
+  if(window.FinnhubProvider && key){
+    try{
+      const res = await window.FinnhubProvider.fetchSymbolData(symbol);
+      if(res && res.series && res.series.length) return res;
+    }catch(e){
+      console.warn('Finnhub symbol fetch failed, falling back to mock', e);
+    }
+  }
+
+  // fallback mock
   const base = 100 + (symbol.charCodeAt(0)%50);
   const series = generateMockSeries(base, base*0.02);
   return { series, current: series[series.length-1] };
@@ -62,7 +82,7 @@ function formatChange(series){
 async function renderIndexMini(index){
   const elVal = document.getElementById(index.elVal);
   const canvas = document.getElementById(index.miniCanvas);
-  const data = await fetchIndexData(index.id);
+  const data = await fetchIndexData(index.id, index.finnhubSymbol);
   elVal.textContent = data.current.toLocaleString();
 
   const ctx = canvas.getContext('2d');
@@ -96,8 +116,9 @@ async function showSymbolOnMain(symbol, label){
   document.getElementById('chartTitle').textContent = label || symbol;
   const chart = ensureMainChart();
   let data;
-  if(symbol === 'SPX' || symbol === 'NDX' || symbol==='DJI' || symbol==='RUT'){
-    data = await fetchIndexData(symbol);
+  const index = INDEXES.find(i=>i.id===symbol);
+  if(index){
+    data = await fetchIndexData(index.id, index.finnhubSymbol);
     document.getElementById('chartSubtitle').textContent = 'Index';
   } else {
     data = await fetchSymbolData(symbol);
@@ -157,6 +178,22 @@ function wireControls(){
       renderWatchlist();
       input.value='';
       showSymbolOnMain(sym);
+    }
+  };
+
+  // Finnhub key save/load
+  const keyInput = document.getElementById('finnhubKey');
+  const saveBtn = document.getElementById('saveKeyBtn');
+  const stored = localStorage.getItem(FINNHUB_KEY_STORAGE) || '';
+  keyInput.value = stored;
+  saveBtn.onclick = ()=>{
+    const k = keyInput.value.trim();
+    if(k){
+      localStorage.setItem(FINNHUB_KEY_STORAGE, k);
+      alert('Finnhub API key saved to localStorage. Refresh or click an index to load live data.');
+    } else {
+      localStorage.removeItem(FINNHUB_KEY_STORAGE);
+      alert('Finnhub API key removed. Reverted to mock data.');
     }
   };
 }
